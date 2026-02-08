@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ספר הלחשים — מאגר כישופים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0d0d14;
+    --bg-surface: #151520;
+    --bg-card: #1c1c2b;
+    --bg-card-hover: #24243a;
+    --gold: #c9a84c;
+    --gold-dim: #8a7434;
+    --gold-bright: #e8c95a;
+    --gold-glow: #c9a84c33;
+    --text-primary: #e8e4d9;
+    --text-secondary: #9b978a;
+    --text-dim: #5e5b52;
+    --border: #2a2a3d;
+    --radius: 6px;
+    --radius-lg: 10px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    --transition: 0.2s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% 10%, #1a153010 0%, transparent 60%),
+      radial-gradient(ellipse 600px 800px at 80% 90%, #15102510 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* === HEADER === */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .logo span {
+    color: var(--text-dim);
+    font-weight: 400;
+    font-size: 0.65em;
+    letter-spacing: 0.15em;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .selection-info {
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: 600;
+    padding: 6px 12px;
+    background: var(--gold-glow);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--radius);
+    white-space: nowrap;
+    display: none;
+  }
+
+  .selection-info.visible { display: inline-block; }
+
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid var(--gold-dim);
+    background: transparent;
+    color: var(--gold);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn:hover {
+    background: var(--gold);
+    color: var(--bg-deep);
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--gold-dim);
+  }
+
+  .btn-danger { border-color: #6b3333; color: #d94a4a; }
+  .btn-danger:hover { background: #d94a4a; color: white; border-color: #d94a4a; box-shadow: 0 0 20px rgba(217,74,74,0.2); }
+
+  /* === TOOLBAR === */
+  .toolbar {
+    padding: 12px 24px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .search-box svg {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 36px 9px 12px;
+    color: var(--text-primary);
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    transition: border-color var(--transition);
+    outline: none;
+  }
+
+  .search-input::placeholder { color: var(--text-dim); }
+  .search-input:focus { border-color: var(--gold-dim); }
+
+  .filter-select {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px 12px 9px 30px;
+    color: var(--text-primary);
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235e5b52'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 10px center;
+    transition: border-color var(--transition);
+    min-width: 120px;
+  }
+
+  .filter-select:focus { border-color: var(--gold-dim); }
+  .filter-select option { background: var(--bg-surface); color: var(--text-primary); }
+
+  /* === RESULTS BAR === */
+  .results-bar {
+    padding: 8px 24px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .results-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .results-count strong { color: var(--gold); font-weight: 400; }
+
+  /* === SPELL GRID === */
+  .spell-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 8px 24px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === SPELL CARD === */
+  .spell-card {
+    border: 3px solid transparent;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition);
+    position: relative;
+    animation: fadeUp 0.3s ease both;
+    cursor: pointer;
+  }
+
+  .spell-card:hover {
+    border-color: var(--gold-dim);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow), 0 0 30px var(--gold-glow);
+  }
+
+  .spell-card.selected {
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 30px var(--gold-glow), 0 0 60px rgba(201,168,76,0.15);
+  }
+
+  /* WebP image area */
+  .card-image-wrap {
+    width: 100%;
+    position: relative;
+    background: #18181f;
+    overflow: hidden;
+  }
+
+  .card-image-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* === EMPTY STATE === */
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--text-dim);
+  }
+
+  .empty-state svg { width: 56px; height: 56px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-state p { font-size: 1.05rem; margin-bottom: 6px; color: var(--text-secondary); }
+  .empty-state small { font-size: 0.85rem; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === MOBILE === */
+  @media (max-width: 768px) {
+    .header-top { padding: 12px 16px; }
+    .logo { font-size: 1.1rem; }
+    .logo span { display: none; }
+    .toolbar { padding: 10px 16px 14px; gap: 8px; }
+    .search-box { min-width: 100%; order: -1; }
+    .filter-select { flex: 1; min-width: calc(50% - 4px); font-size: 0.85rem; }
+    .spell-grid {
+      grid-template-columns: 1fr;
+      padding: 8px 16px 40px;
+      gap: 14px;
+    }
+    .results-bar { padding: 6px 16px 10px; }
+    .btn { padding: 7px 10px; font-size: 0.7rem; }
+    .selection-info { font-size: 0.75rem; padding: 5px 8px; }
+  }
+
+  @media (max-width: 400px) {
+    .header-actions .btn-text { display: none; }
+  }
+
+  /* === LOAD MORE === */
+  .load-more-wrap {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 24px 0 8px;
+  }
+
+  .load-more-btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--gold-dim);
+    background: transparent;
+    color: var(--gold);
+    padding: 12px 32px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+
+  .load-more-btn:hover {
+    background: var(--gold);
+    color: var(--bg-deep);
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header class="header">
+  <div class="header-top">
+    <div class="logo">
+      ספר הלחשים
+      <span>מאגר כישופים</span>
+    </div>
+    <div class="header-actions">
+      <span class="selection-info" id="selectionInfo">0 נבחרו</span>
+      <button class="btn btn-danger" id="clearBtn" onclick="clearSelection()" style="display:none;">נקה</button>
+      <button class="btn" id="printBtn" onclick="printSelected()" disabled>
+        <span class="btn-text">הדפס </span>נבחרים
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="חפש כישוף לפי שם…" oninput="debouncedSearch()">
+    </div>
+    <select class="filter-select" id="classFilter" onchange="applyFilters()">
+      <option value="">כל המחלקות</option>
+    </select>
+    <select class="filter-select" id="levelFilter" onchange="applyFilters()">
+      <option value="">כל הרמות</option>
+      <option value="0">טריק</option>
+      <option value="1">רמה 1</option>
+      <option value="2">רמה 2</option>
+      <option value="3">רמה 3</option>
+      <option value="4">רמה 4</option>
+      <option value="5">רמה 5</option>
+      <option value="6">רמה 6</option>
+      <option value="7">רמה 7</option>
+      <option value="8">רמה 8</option>
+      <option value="9">רמה 9</option>
+    </select>
+    <select class="filter-select" id="schoolFilter" onchange="applyFilters()">
+      <option value="">כל האסכולות</option>
+    </select>
+    <select class="filter-select" id="sortSelect" onchange="applyFilters()">
+      <option value="alpha">א׳ → ת׳</option>
+      <option value="level-asc">רמה ↑</option>
+      <option value="level-desc">רמה ↓</option>
+    </select>
+  </div>
+
+  <div class="results-bar">
+    <span class="results-count" id="resultsCount">מציג <strong>0</strong> כישופים</span>
+  </div>
+</header>
+
+<!-- ========== SPELL GRID ========== -->
+<div class="spell-grid" id="spellGrid"></div>
+
+<script src="data/spells.js"></script>
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const selectedSpells = new Set();
+const PAGE_SIZE = 50;
+let currentFiltered = [];
+let displayedCount = 0;
+let searchTimer = null;
+
+// Hebrew labels for class names
+const CLASS_LABELS = {
+  Bard: 'בארד',
+  Cleric: 'כומר',
+  Druid: 'דרואיד',
+  Paladin: 'פלדין',
+  Ranger: 'סייר',
+  Sorcerer: 'מכשף',
+  Warlock: 'וורלוק',
+  Wizard: 'קוסם'
+};
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+function init() {
+  populateClassFilter();
+  populateSchoolFilter();
+  applyFilters();
+}
+
+function populateClassFilter() {
+  const classes = new Set();
+  SPELLS.forEach(s => s.classes.forEach(c => classes.add(c)));
+  const sorted = [...classes].sort((a, b) =>
+    (CLASS_LABELS[a] || a).localeCompare(CLASS_LABELS[b] || b)
+  );
+  const sel = document.getElementById('classFilter');
+  sorted.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = CLASS_LABELS[c] || c;
+    sel.appendChild(opt);
+  });
+}
+
+function populateSchoolFilter() {
+  const schools = new Set();
+  SPELLS.forEach(s => { if (s.school) schools.add(s.school); });
+  const sorted = [...schools].sort((a, b) => a.localeCompare(b));
+  const sel = document.getElementById('schoolFilter');
+  sorted.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  DEBOUNCED SEARCH
+// ═══════════════════════════════════════════
+function debouncedSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(applyFilters, 200);
+}
+
+// ═══════════════════════════════════════════
+//  FILTERING / SORTING
+// ═══════════════════════════════════════════
+function applyFilters() {
+  const query = document.getElementById('searchInput').value.trim();
+  const classVal = document.getElementById('classFilter').value;
+  const levelVal = document.getElementById('levelFilter').value;
+  const schoolVal = document.getElementById('schoolFilter').value;
+  const sortVal = document.getElementById('sortSelect').value;
+
+  currentFiltered = SPELLS.filter(spell => {
+    if (query && !spell.name.includes(query)) return false;
+    if (classVal && !spell.classes.includes(classVal)) return false;
+    if (levelVal !== '' && spell.level !== parseInt(levelVal)) return false;
+    if (schoolVal && spell.school !== schoolVal) return false;
+    return true;
+  });
+
+  currentFiltered.sort((a, b) => {
+    if (sortVal === 'alpha') return a.name.localeCompare(b.name);
+    if (sortVal === 'level-asc') return a.level - b.level || a.name.localeCompare(b.name);
+    if (sortVal === 'level-desc') return b.level - a.level || a.name.localeCompare(b.name);
+    return 0;
+  });
+
+  displayedCount = 0;
+  document.getElementById('spellGrid').innerHTML = '';
+  showMore();
+}
+
+// ═══════════════════════════════════════════
+//  PAGINATION — load PAGE_SIZE at a time
+// ═══════════════════════════════════════════
+function showMore() {
+  const grid = document.getElementById('spellGrid');
+
+  // Remove existing load-more button
+  const existingBtn = grid.querySelector('.load-more-wrap');
+  if (existingBtn) existingBtn.remove();
+
+  if (currentFiltered.length === 0 && displayedCount === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <p>לא נמצאו כישופים</p>
+        <small>נסו לשנות את החיפוש או הסינון</small>
+      </div>`;
+    document.getElementById('resultsCount').innerHTML = 'מציג <strong>0</strong> כישופים';
+    return;
+  }
+
+  const nextBatch = currentFiltered.slice(displayedCount, displayedCount + PAGE_SIZE);
+  const fragment = document.createDocumentFragment();
+
+  nextBatch.forEach((spell, i) => {
+    const card = document.createElement('div');
+    card.className = 'spell-card' + (selectedSpells.has(spell.name) ? ' selected' : '');
+    card.style.animationDelay = Math.min(i * 0.03, 0.5) + 's';
+    card.dataset.spellName = spell.name;
+
+    card.innerHTML = `
+      <div class="card-image-wrap">
+        <img src="${spell.image || ''}"
+             alt="${spell.name}"
+             loading="lazy"
+             decoding="async">
+      </div>`;
+
+    card.addEventListener('click', () => toggleSpell(spell.name));
+    fragment.appendChild(card);
+  });
+
+  displayedCount += nextBatch.length;
+  grid.appendChild(fragment);
+
+  // Show load-more button if there are more spells
+  if (displayedCount < currentFiltered.length) {
+    const remaining = currentFiltered.length - displayedCount;
+    const wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    wrap.innerHTML = `<button class="load-more-btn" onclick="showMore()">הצג עוד (${remaining})</button>`;
+    grid.appendChild(wrap);
+  }
+
+  document.getElementById('resultsCount').innerHTML =
+    `מציג <strong>${displayedCount}</strong> מתוך <strong>${currentFiltered.length}</strong> כישופים`;
+}
+
+function levelLabel(lvl) {
+  if (lvl === 0) return 'טריק';
+  return `רמה ${lvl}`;
+}
+
+// ═══════════════════════════════════════════
+//  SELECTION
+//  Toggles CSS class directly — no re-render.
+// ═══════════════════════════════════════════
+function toggleSpell(name) {
+  if (selectedSpells.has(name)) {
+    selectedSpells.delete(name);
+  } else {
+    selectedSpells.add(name);
+  }
+  updateSelectionUI();
+
+  document.querySelectorAll(`.spell-card[data-spell-name="${CSS.escape(name)}"]`).forEach(card => {
+    card.classList.toggle('selected', selectedSpells.has(name));
+  });
+}
+
+function clearSelection() {
+  selectedSpells.clear();
+  updateSelectionUI();
+  document.querySelectorAll('.spell-card').forEach(card => card.classList.remove('selected'));
+}
+
+function updateSelectionUI() {
+  const count = selectedSpells.size;
+  const info = document.getElementById('selectionInfo');
+  const printBtn = document.getElementById('printBtn');
+  const clearBtn = document.getElementById('clearBtn');
+
+  if (count > 0) {
+    info.textContent = `${count} נבחרו`;
+    info.classList.add('visible');
+    clearBtn.style.display = 'inline-block';
+    printBtn.disabled = false;
+  } else {
+    info.classList.remove('visible');
+    clearBtn.style.display = 'none';
+    printBtn.disabled = true;
+  }
+}
+
+// ═══════════════════════════════════════════
+//  PRINT — opens PDFs in new window
+// ═══════════════════════════════════════════
+function printSelected() {
+  if (selectedSpells.size === 0) return;
+
+  const selected = SPELLS.filter(s => selectedSpells.has(s.name));
+  const pdfPaths = selected.map(s => s.pdf).filter(Boolean);
+
+  if (pdfPaths.length === 0) {
+    alert('אין קבצי PDF מקושרים לכישופים שנבחרו.');
+    return;
+  }
+
+  const printWin = window.open('', '_blank');
+  if (!printWin) {
+    alert('אנא אפשרו חלונות קופצים כדי להדפיס כישופים.');
+    return;
+  }
+
+  const iframes = pdfPaths.map((path, i) =>
+    `<div style="page-break-after: ${i < pdfPaths.length - 1 ? 'always' : 'auto'}; margin-bottom: 20px;">
+       <iframe src="${path}" style="width:100%; height:100vh; border:none;" title="כישוף ${i+1}"></iframe>
+     </div>`
+  ).join('');
+
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="he">
+    <head>
+      <title>הדפסת כישופים — ספר הלחשים</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #e8e4d9; padding: 20px; }
+        h2 { text-align: center; margin-bottom: 16px; color: #c9a84c; font-size: 1.2rem; }
+        .print-info { text-align: center; margin-bottom: 24px; color: #9b978a; font-size: 0.9rem; }
+        .print-btn { display: block; margin: 0 auto 24px; background: #c9a84c; color: #0d0d14; border: none; padding: 12px 32px; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; }
+        .print-btn:hover { opacity: 0.9; }
+        iframe { background: white; border-radius: 4px; }
+        @media print { .no-print { display: none !important; } body { background: white; padding: 0; } iframe { height: auto; min-height: 90vh; } }
+      </style>
+    </head>
+    <body>
+      <div class="no-print">
+        <h2>ספר הלחשים — תצוגה מקדימה להדפסה</h2>
+        <p class="print-info">${pdfPaths.length} כרטיס${pdfPaths.length !== 1 ? 'י' : ''} כישוף מוכנים להדפסה</p>
+        <button class="print-btn" onclick="window.print()">הדפס כרטיסי כישוף</button>
+      </div>
+      ${iframes}
+    </body>
+    </html>
+  `);
+  printWin.document.close();
+}
+
+// ═══════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
