@@ -20,7 +20,7 @@ import sys
 import os
 import re
 from pathlib import Path
-from pypdf import PdfReader, PdfWriter
+from pypdf import PdfReader
 import fitz  # PyMuPDF
 from PIL import Image
 import io
@@ -29,9 +29,11 @@ import argparse
 # ─── CONFIG ───────────────────────────────────────────
 SPELLS_PDF_DIR = "spells"
 IMAGES_DIR = "images"
+HIRES_DIR = "high_res_images"
 SPELLS_JS_PATH = "data/spells.js"
 WEBP_QUALITY = 85       # WebP quality (1-100)
 WEBP_DPI = 200          # Resolution for PDF→image conversion
+HIRES_DPI = 600         # Resolution for high-res print PNG
 # ──────────────────────────────────────────────────────
 
 CLASSES = [
@@ -154,6 +156,8 @@ if __name__ == "__main__":
     # Open with PyMuPDF for image conversion
     fitz_doc = fitz.open(args.path)
 
+    Path(HIRES_DIR).mkdir(parents=True, exist_ok=True)
+
     entries = []
     skipped = 0
     level = 0
@@ -181,12 +185,15 @@ if __name__ == "__main__":
         school = school or "Unknown"
         slug   = name
 
-        # ── Save single-page PDF (preserve form fields) ──
+        # ── Save single-page PDF (rasterised at 300 DPI to bake in form fields) ──
         pdf_out = f"{SPELLS_PDF_DIR}/{slug}.pdf"
-        writer = PdfWriter()
-        writer.append(reader, pages=[i])
-        with open(pdf_out, "wb") as f:
-            writer.write(f)
+        page_rect = fitz_doc[i].rect
+        hires = fitz_doc[i].get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
+        single = fitz.open()
+        pg = single.new_page(width=page_rect.width, height=page_rect.height)
+        pg.insert_image(pg.rect, pixmap=hires)
+        single.save(pdf_out, deflate=True)
+        single.close()
 
         # ── Save WebP image ──
         img_out = f"{IMAGES_DIR}/{slug}.webp"
@@ -196,6 +203,13 @@ if __name__ == "__main__":
         img_data = pix.tobytes("png")
         img = Image.open(io.BytesIO(img_data))
         img.save(img_out, "WEBP", quality=WEBP_QUALITY)
+
+        # ── Save high-res PNG (from original vector source) ──
+        hires_out = f"{HIRES_DIR}/{slug}.png"
+        hires_zoom = HIRES_DPI / 72
+        hires_mat = fitz.Matrix(hires_zoom, hires_zoom)
+        hires_pix = fitz_doc[i].get_pixmap(matrix=hires_mat)
+        hires_pix.save(hires_out)
 
         # ── Ask for classes ──
         if not pname:
