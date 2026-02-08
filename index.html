@@ -59,6 +59,11 @@
     z-index: 100;
     background: var(--bg-deep);
     border-bottom: 1px solid var(--border);
+    transition: transform 0.3s ease;
+  }
+
+  .header.hidden {
+    transform: translateY(-100%);
   }
 
   .header-top {
@@ -393,6 +398,7 @@
 <!-- ========== SPELL GRID ========== -->
 <div class="spell-grid" id="spellGrid"></div>
 
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="data/spells.js"></script>
 <script>
 // ═══════════════════════════════════════════
@@ -406,13 +412,13 @@ let searchTimer = null;
 
 // Hebrew labels for class names
 const CLASS_LABELS = {
-  Bard: 'בארד',
-  Cleric: 'כומר',
+  Bard: 'טרובדור',
+  Cleric: 'כוהן',
   Druid: 'דרואיד',
-  Paladin: 'פלדין',
+  Paladin: 'אביר קודש',
   Ranger: 'סייר',
-  Sorcerer: 'מכשף',
-  Warlock: 'וורלוק',
+  Sorcerer: 'אשף',
+  Warlock: 'מכשף',
   Wizard: 'קוסם'
 };
 
@@ -596,9 +602,9 @@ function updateSelectionUI() {
 }
 
 // ═══════════════════════════════════════════
-//  PRINT — opens PDFs in new window
+//  PRINT — build PDF with 2 cards per page & download
 // ═══════════════════════════════════════════
-function printSelected() {
+async function printSelected() {
   if (selectedSpells.size === 0) return;
 
   const selected = SPELLS.filter(s => selectedSpells.has(s.name));
@@ -609,45 +615,94 @@ function printSelected() {
     return;
   }
 
-  const printWin = window.open('', '_blank');
-  if (!printWin) {
-    alert('אנא אפשרו חלונות קופצים כדי להדפיס כישופים.');
-    return;
+  const btn = document.getElementById('printBtn');
+  btn.disabled = true;
+  btn.textContent = 'מכין PDF…';
+
+  try {
+    const { PDFDocument } = PDFLib;
+
+    // Page & card sizes in points (72 pts = 1 inch)
+    const PAGE_W = 3.9 * 72;   // 280.8
+    const PAGE_H = 5.8 * 72;   // 417.6
+    const CARD_W = 3.5 * 72;   // 252
+    const CARD_H = 2.5 * 72;   // 180
+    const marginX = (PAGE_W - CARD_W) / 2;
+    const gap = (PAGE_H - 2 * CARD_H) / 3;
+
+    const outPdf = await PDFDocument.create();
+
+    // Fetch all spell PDFs in parallel
+    const buffers = await Promise.all(
+      pdfPaths.map(path => fetch(path).then(r => r.arrayBuffer()))
+    );
+
+    // Lay out 2 cards per page
+    for (let i = 0; i < buffers.length; i += 2) {
+      const page = outPdf.addPage([PAGE_W, PAGE_H]);
+
+      // Top card
+      const topDoc = await PDFDocument.load(buffers[i]);
+      const [topEmbed] = await outPdf.embedPdf(topDoc, [0]);
+      page.drawPage(topEmbed, {
+        x: marginX,
+        y: gap * 2 + CARD_H,
+        width: CARD_W,
+        height: CARD_H,
+      });
+
+      // Bottom card (if exists)
+      if (i + 1 < buffers.length) {
+        const botDoc = await PDFDocument.load(buffers[i + 1]);
+        const [botEmbed] = await outPdf.embedPdf(botDoc, [0]);
+        page.drawPage(botEmbed, {
+          x: marginX,
+          y: gap,
+          width: CARD_W,
+          height: CARD_H,
+        });
+      }
+    }
+
+    // Trigger download
+    const bytes = await outPdf.save();
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'spell-cards.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error('PDF generation failed:', err);
+    if (location.protocol === 'file:') {
+      alert('לא ניתן לטעון קבצי PDF מקומיים ישירות מהדפדפן.\nהפעל את start.bat כדי לפתוח דרך שרת מקומי.');
+    } else {
+      alert('שגיאה ביצירת קובץ ה-PDF. בדוק את הקונסול.');
+    }
+  } finally {
+    btn.disabled = selectedSpells.size === 0;
+    btn.innerHTML = '<span class="btn-text">הדפס </span>נבחרים';
   }
+}
 
-  const iframes = pdfPaths.map((path, i) =>
-    `<div style="page-break-after: ${i < pdfPaths.length - 1 ? 'always' : 'auto'}; margin-bottom: 20px;">
-       <iframe src="${path}" style="width:100%; height:100vh; border:none;" title="כישוף ${i+1}"></iframe>
-     </div>`
-  ).join('');
+// ═══════════════════════════════════════════
+//  HIDE HEADER ON SCROLL DOWN, SHOW ON SCROLL UP
+// ═══════════════════════════════════════════
+{
+  const header = document.querySelector('.header');
+  let lastScrollY = 0;
 
-  printWin.document.write(`
-    <!DOCTYPE html>
-    <html dir="rtl" lang="he">
-    <head>
-      <title>הדפסת כישופים — ספר הלחשים</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #e8e4d9; padding: 20px; }
-        h2 { text-align: center; margin-bottom: 16px; color: #c9a84c; font-size: 1.2rem; }
-        .print-info { text-align: center; margin-bottom: 24px; color: #9b978a; font-size: 0.9rem; }
-        .print-btn { display: block; margin: 0 auto 24px; background: #c9a84c; color: #0d0d14; border: none; padding: 12px 32px; border-radius: 6px; font-weight: 600; font-size: 1rem; cursor: pointer; }
-        .print-btn:hover { opacity: 0.9; }
-        iframe { background: white; border-radius: 4px; }
-        @media print { .no-print { display: none !important; } body { background: white; padding: 0; } iframe { height: auto; min-height: 90vh; } }
-      </style>
-    </head>
-    <body>
-      <div class="no-print">
-        <h2>ספר הלחשים — תצוגה מקדימה להדפסה</h2>
-        <p class="print-info">${pdfPaths.length} כרטיס${pdfPaths.length !== 1 ? 'י' : ''} כישוף מוכנים להדפסה</p>
-        <button class="print-btn" onclick="window.print()">הדפס כרטיסי כישוף</button>
-      </div>
-      ${iframes}
-    </body>
-    </html>
-  `);
-  printWin.document.close();
+  window.addEventListener('scroll', () => {
+    const currentY = window.scrollY;
+    if (currentY > lastScrollY && currentY > 80) {
+      header.classList.add('hidden');
+    } else {
+      header.classList.remove('hidden');
+    }
+    lastScrollY = currentY;
+  }, { passive: true });
 }
 
 // ═══════════════════════════════════════════

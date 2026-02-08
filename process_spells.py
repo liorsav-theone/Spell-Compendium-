@@ -60,7 +60,6 @@ def get_form_field(page, prefix: str) -> str:
     fields = page.get("/Annots")
     if not fields:
         return None
-
     for annot_ref in fields:
         annot = annot_ref.get_object()
         field_name = annot.get("/T", "")
@@ -70,6 +69,9 @@ def get_form_field(page, prefix: str) -> str:
         if isinstance(field_name, str) and field_name.startswith(prefix):
             # Try /V first (value), then /AS (appearance state)
             val = annot.get("/V")
+            if (not val) and annot.get("/Parent"):
+                parent = annot["/Parent"].get_object()
+                val = parent.get("/V")
             if val is not None:
                 return str(val).strip()
     return None
@@ -154,38 +156,35 @@ if __name__ == "__main__":
 
     entries = []
     skipped = 0
+    level = 0
+    school= ""
+    classes = []
 
     for i, page in enumerate(reader.pages):
         page_num = i + 1
 
         # ── Extract form fields ──
         name = get_form_field(page, "Name_")
-        school = get_form_field(page, "School_")
-        level_str = get_form_field(page, "Level_")
+        pname = get_form_field(page, "PName_")
+        if not pname:
+            school = get_form_field(page, "School_")
+            level = get_form_field(page, "Level_")
+        else:
+            name=pname
 
-        if not name:
+        if not (name or pname):
             print(f"  ⚠ Page {page_num}: No 'Name_' field found — skipping")
             skipped += 1
             continue
 
-        # Parse level (handle "Cantrip" or numeric)
-        level = 0
-        if level_str:
-            level_str_clean = level_str.strip().lower()
-            if level_str_clean in ("cantrip", "0", "טריק"):
-                level = 0
-            else:
-                nums = re.findall(r"\d+", level_str_clean)
-                if nums:
-                    level = int(nums[0])
-
+        level  = int(level)
         school = school or "Unknown"
-        slug = name
+        slug   = name
 
-        # ── Save single-page PDF ──
+        # ── Save single-page PDF (preserve form fields) ──
         pdf_out = f"{SPELLS_PDF_DIR}/{slug}.pdf"
         writer = PdfWriter()
-        writer.add_page(page)
+        writer.append(reader, pages=[i])
         with open(pdf_out, "wb") as f:
             writer.write(f)
 
@@ -199,7 +198,8 @@ if __name__ == "__main__":
         img.save(img_out, "WEBP", quality=WEBP_QUALITY)
 
         # ── Ask for classes ──
-        classes = ask_classes(name)
+        if not pname:
+            classes = ask_classes(name)
 
         entries.append({
             "name": name,
