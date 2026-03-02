@@ -254,10 +254,26 @@
     box-shadow: var(--shadow), 0 0 30px var(--gold-glow);
   }
 
-  .spell-card.selected {
+  .spell-card.favorited {
     border-color: var(--gold-bright);
     box-shadow: 0 0 30px var(--gold-glow), 0 0 60px rgba(201,168,76,0.15);
   }
+
+  .card-fav-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--gold-bright);
+    text-shadow: 0 0 10px rgba(232,201,90,0.9), 0 2px 6px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity var(--transition);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .spell-card.favorited .card-fav-badge { opacity: 1; }
 
   /* WebP image area */
   .card-image-wrap {
@@ -362,12 +378,23 @@
     border-color: var(--border);
   }
 
-  .spell-list-item.selected {
+  .spell-list-item.favorited {
     background: var(--gold-glow);
     border-color: var(--gold-dim);
   }
 
-  .spell-list-item.selected .list-spell-name { color: var(--gold-bright); }
+  .spell-list-item.favorited .list-spell-name { color: var(--gold-bright); }
+
+  .list-fav-star {
+    font-size: 0.95rem;
+    color: var(--gold);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--transition);
+    line-height: 1;
+  }
+
+  .spell-list-item.favorited .list-fav-star { opacity: 1; }
 
   .list-spell-name {
     font-family: 'Cinzel', serif;
@@ -399,11 +426,165 @@
   .spell-list .load-more-wrap { padding: 16px 0 8px; text-align: center; }
   #spellList { display: none; }
 
+  /* === SPELL MODAL === */
+  .spell-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .spell-modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .spell-modal {
+    position: relative;
+    max-width: 480px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .spell-modal img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.9);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: all var(--transition);
+    z-index: 1;
+  }
+
+  .modal-close:hover {
+    background: var(--gold);
+    color: var(--bg-deep);
+    border-color: var(--gold);
+  }
+
+  .modal-select-btn {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 28px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    border: 1px solid var(--gold-dim);
+    background: transparent;
+    color: var(--gold);
+  }
+
+  .modal-select-btn:hover {
+    background: var(--gold);
+    color: var(--bg-deep);
+    box-shadow: 0 0 20px var(--gold-glow);
+  }
+
+  .modal-select-btn.selected-state {
+    background: var(--gold-glow);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+  }
+
   @media (max-width: 768px) {
     .spell-list { padding: 8px 12px 40px; }
     .list-spell-meta { display: none; }
     .list-spell-name { font-size: 0.85rem; }
   }
+
+  /* === FAVORITES FILTER BUTTON === */
+  .btn-fav {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-fav:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .btn-fav.active { border-color: var(--gold-bright); color: var(--gold-bright); background: var(--gold-glow); }
+
+  /* === UNFAVORITE CONFIRM === */
+  .unfav-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .unfav-overlay.open { opacity: 1; pointer-events: all; }
+
+  .unfav-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    max-width: 300px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+
+  .unfav-box p {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  .unfav-box strong {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+
+  .unfav-actions { display: flex; gap: 10px; justify-content: center; }
 
   /* === LOAD MORE === */
   .load-more-wrap {
@@ -444,10 +625,10 @@
       <span>מאגר כישופים</span>
     </div>
     <div class="header-actions">
-      <span class="selection-info" id="selectionInfo">0 נבחרו</span>
-      <button class="btn btn-danger" id="clearBtn" onclick="clearSelection()" style="display:none;">נקה</button>
+      <span class="selection-info" id="selectionInfo">★ 0 מועדפים</span>
+      <button class="btn btn-danger" id="clearBtn" onclick="clearFavorites()" style="display:none;">נקה</button>
       <button class="btn" id="printBtn" onclick="printSelected()" disabled>
-        <span class="btn-text">הדפס </span>נבחרים
+        <span class="btn-text">הדפס </span>מועדפים
       </button>
     </div>
   </div>
@@ -481,6 +662,7 @@
       <option value="level-asc">רמה ↑</option>
       <option value="level-desc">רמה ↓</option>
     </select>
+    <button type="button" class="btn-fav" id="favFilterBtn" onclick="toggleFavoritesFilter()">★ מועדפים</button>
   </div>
 
   <div class="results-bar">
@@ -500,18 +682,56 @@
 <div class="spell-grid" id="spellGrid"></div>
 <div class="spell-list" id="spellList"></div>
 
+<!-- ========== SPELL MODAL ========== -->
+<div class="spell-modal-overlay" id="spellModalOverlay" onclick="handleOverlayClick(event)">
+  <div class="spell-modal" id="spellModal">
+    <button type="button" class="modal-close" onclick="closeSpellModal()" aria-label="סגור">&#x2715;</button>
+    <img id="modalSpellImg" src="" alt="">
+    <button type="button" class="modal-select-btn" id="modalSelectBtn" onclick="toggleModalFavorite()">הוסף למועדפים</button>
+  </div>
+</div>
+
+<!-- ========== UNFAVORITE CONFIRM ========== -->
+<div class="unfav-overlay" id="unfavOverlay">
+  <div class="unfav-box">
+    <p>הסר מהמועדפים?</p>
+    <strong id="unfavSpellName"></strong>
+    <div class="unfav-actions">
+      <button type="button" class="btn btn-danger" onclick="confirmUnfavorite()">הסר</button>
+      <button type="button" class="btn" onclick="cancelUnfavorite()">ביטול</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="data/spells.js"></script>
 <script>
 // ═══════════════════════════════════════════
+//  FAVORITES — persisted to localStorage
+// ═══════════════════════════════════════════
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem('dnd-spell-favorites');
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+function saveFavorites() {
+  localStorage.setItem('dnd-spell-favorites', JSON.stringify([...favoriteSpells]));
+}
+
+const favoriteSpells = loadFavorites();
+
+// ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
-const selectedSpells = new Set();
 const PAGE_SIZE = 50;
 let currentFiltered = [];
 let displayedCount = 0;
 let searchTimer = null;
 let viewMode = 'grid'; // 'grid' | 'list'
+let showFavoritesOnly = false;
+let pendingUnfavoriteName = null;
 
 // Hebrew labels for class names
 const CLASS_LABELS = {
@@ -531,6 +751,7 @@ const CLASS_LABELS = {
 function init() {
   populateClassFilter();
   populateSchoolFilter();
+  updateFavUI();
   applyFilters();
 }
 
@@ -581,6 +802,7 @@ function applyFilters() {
   const sortVal = document.getElementById('sortSelect').value;
 
   currentFiltered = SPELLS.filter(spell => {
+    if (showFavoritesOnly && !favoriteSpells.has(spell.name)) return false;
     if (query && !spell.name.includes(query)) return false;
     if (classVal && !spell.classes.includes(classVal)) return false;
     if (levelVal !== '' && spell.level !== parseInt(levelVal)) return false;
@@ -601,6 +823,12 @@ function applyFilters() {
   showMore();
 }
 
+function toggleFavoritesFilter() {
+  showFavoritesOnly = !showFavoritesOnly;
+  document.getElementById('favFilterBtn').classList.toggle('active', showFavoritesOnly);
+  applyFilters();
+}
+
 // ═══════════════════════════════════════════
 //  PAGINATION — load PAGE_SIZE at a time
 // ═══════════════════════════════════════════
@@ -609,16 +837,17 @@ function showMore() {
     ? document.getElementById('spellGrid')
     : document.getElementById('spellList');
 
-  // Remove existing load-more button
   const existingBtn = container.querySelector('.load-more-wrap');
   if (existingBtn) existingBtn.remove();
 
   if (currentFiltered.length === 0 && displayedCount === 0) {
+    const emptyMsg = showFavoritesOnly
+      ? '<p>אין כישופים מועדפים</p><small>לחץ על כישוף כדי להוסיפו למועדפים</small>'
+      : '<p>לא נמצאו כישופים</p><small>נסו לשנות את החיפוש או הסינון</small>';
     container.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <p>לא נמצאו כישופים</p>
-        <small>נסו לשנות את החיפוש או הסינון</small>
+        ${emptyMsg}
       </div>`;
     document.getElementById('resultsCount').innerHTML = 'מציג <strong>0</strong> כישופים';
     return;
@@ -628,9 +857,10 @@ function showMore() {
   const fragment = document.createDocumentFragment();
 
   nextBatch.forEach((spell, i) => {
+    const isFav = favoriteSpells.has(spell.name);
     if (viewMode === 'grid') {
       const card = document.createElement('div');
-      card.className = 'spell-card' + (selectedSpells.has(spell.name) ? ' selected' : '');
+      card.className = 'spell-card' + (isFav ? ' favorited' : '');
       card.style.animationDelay = Math.min(i * 0.03, 0.5) + 's';
       card.dataset.spellName = spell.name;
       card.innerHTML = `
@@ -639,21 +869,23 @@ function showMore() {
                alt="${spell.name}"
                loading="lazy"
                decoding="async">
+          <span class="card-fav-badge">★</span>
         </div>`;
-      card.addEventListener('click', () => toggleSpell(spell.name));
+      card.addEventListener('click', () => toggleFavorite(spell.name));
       fragment.appendChild(card);
     } else {
       const row = document.createElement('div');
-      row.className = 'spell-list-item' + (selectedSpells.has(spell.name) ? ' selected' : '');
+      row.className = 'spell-list-item' + (isFav ? ' favorited' : '');
       row.style.animationDelay = Math.min(i * 0.015, 0.4) + 's';
       row.dataset.spellName = spell.name;
       row.innerHTML = `
+        <span class="list-fav-star">★</span>
         <span class="list-spell-name">${spell.name}</span>
         <span class="list-spell-meta">
           <span class="list-level-badge">${levelLabel(spell.level)}</span>
           ${spell.school || ''}
         </span>`;
-      row.addEventListener('click', () => toggleSpell(spell.name));
+      row.addEventListener('click', () => openSpellModal(spell));
       fragment.appendChild(row);
     }
   });
@@ -661,7 +893,6 @@ function showMore() {
   displayedCount += nextBatch.length;
   container.appendChild(fragment);
 
-  // Show load-more button if there are more spells
   if (displayedCount < currentFiltered.length) {
     const remaining = currentFiltered.length - displayedCount;
     const wrap = document.createElement('div');
@@ -680,36 +911,65 @@ function levelLabel(lvl) {
 }
 
 // ═══════════════════════════════════════════
-//  SELECTION
-//  Toggles CSS class directly — no re-render.
+//  FAVORITES
 // ═══════════════════════════════════════════
-function toggleSpell(name) {
-  if (selectedSpells.has(name)) {
-    selectedSpells.delete(name);
+function toggleFavorite(name) {
+  if (favoriteSpells.has(name)) {
+    showUnfavConfirm(name);
   } else {
-    selectedSpells.add(name);
+    favoriteSpells.add(name);
+    saveFavorites();
+    applyFavoritedClass(name, true);
+    updateFavUI();
   }
-  updateSelectionUI();
+}
 
+function showUnfavConfirm(name) {
+  pendingUnfavoriteName = name;
+  document.getElementById('unfavSpellName').textContent = name;
+  document.getElementById('unfavOverlay').classList.add('open');
+}
+
+function confirmUnfavorite() {
+  if (!pendingUnfavoriteName) return;
+  const name = pendingUnfavoriteName;
+  favoriteSpells.delete(name);
+  saveFavorites();
+  applyFavoritedClass(name, false);
+  updateFavUI();
+  cancelUnfavorite();
+  if (modalSpell && modalSpell.name === name) updateModalFavBtn();
+  if (showFavoritesOnly) applyFilters();
+}
+
+function cancelUnfavorite() {
+  document.getElementById('unfavOverlay').classList.remove('open');
+  pendingUnfavoriteName = null;
+}
+
+function applyFavoritedClass(name, isFav) {
   document.querySelectorAll(`[data-spell-name="${CSS.escape(name)}"]`).forEach(el => {
-    el.classList.toggle('selected', selectedSpells.has(name));
+    el.classList.toggle('favorited', isFav);
   });
 }
 
-function clearSelection() {
-  selectedSpells.clear();
-  updateSelectionUI();
-  document.querySelectorAll('.spell-card, .spell-list-item').forEach(el => el.classList.remove('selected'));
+function clearFavorites() {
+  favoriteSpells.clear();
+  saveFavorites();
+  updateFavUI();
+  document.querySelectorAll('.spell-card.favorited, .spell-list-item.favorited')
+    .forEach(el => el.classList.remove('favorited'));
+  if (showFavoritesOnly) applyFilters();
 }
 
-function updateSelectionUI() {
-  const count = selectedSpells.size;
+function updateFavUI() {
+  const count = favoriteSpells.size;
   const info = document.getElementById('selectionInfo');
   const printBtn = document.getElementById('printBtn');
   const clearBtn = document.getElementById('clearBtn');
 
   if (count > 0) {
-    info.textContent = `${count} נבחרו`;
+    info.textContent = `★ ${count} מועדפים`;
     info.classList.add('visible');
     clearBtn.style.display = 'inline-block';
     printBtn.disabled = false;
@@ -724,9 +984,9 @@ function updateSelectionUI() {
 //  PRINT — build PDF with 2 cards per page & download
 // ═══════════════════════════════════════════
 async function printSelected() {
-  if (selectedSpells.size === 0) return;
+  if (favoriteSpells.size === 0) return;
 
-  const selected = SPELLS.filter(s => selectedSpells.has(s.name));
+  const selected = SPELLS.filter(s => favoriteSpells.has(s.name));
   if (selected.length === 0) return;
 
   const btn = document.getElementById('printBtn');
@@ -736,25 +996,23 @@ async function printSelected() {
   try {
     const { PDFDocument, rgb } = PDFLib;
 
-    // Page & card sizes in points (72 pts = 1 inch)
-    const PAGE_W = 3.9 * 72;   // 280.8
-    const PAGE_H = 5.8 * 72;   // 417.6
-    const CARD_W = 3.5 * 72;   // 252  (landscape width after 90° rotation)
-    const CARD_H = 2.5 * 72;   // 180  (landscape height after 90° rotation)
+    const PAGE_W = 3.9 * 72;
+    const PAGE_H = 5.8 * 72;
+    const CARD_W = 3.5 * 72;
+    const CARD_H = 2.5 * 72;
     const marginX = (PAGE_W - CARD_W) / 2;
     const gap = (PAGE_H - 2 * CARD_H) / 3;
 
-    // Load a spell image, rotate 90° CW on canvas, return PNG bytes
     function loadRotatedPng(src) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
           const c = document.createElement('canvas');
-          c.width = img.naturalHeight;   // swapped
+          c.width = img.naturalHeight;
           c.height = img.naturalWidth;
           const ctx = c.getContext('2d');
           ctx.translate(c.width / 2, c.height / 2);
-          ctx.rotate(-Math.PI / 2);      // 90° CW
+          ctx.rotate(-Math.PI / 2);
           ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
           c.toBlob(blob => {
             blob.arrayBuffer().then(buf => resolve(new Uint8Array(buf)));
@@ -766,16 +1024,12 @@ async function printSelected() {
     }
 
     const outPdf = await PDFDocument.create();
-
-    // Convert all spell images to rotated PNGs in parallel
     const pngDataArray = await Promise.all(
       selected.map(s => loadRotatedPng(s.image.replace('images/', 'high_res_images/').replace('.webp', '.png')))
     );
 
-    // Lay out 2 cards per page
     for (let i = 0; i < pngDataArray.length; i += 2) {
       const page = outPdf.addPage([PAGE_W, PAGE_H]);
-
       const borderOpts = { borderColor: rgb(0, 0, 0), borderWidth: 0.5, color: undefined };
 
       const topImg = await outPdf.embedPng(pngDataArray[i]);
@@ -790,7 +1044,6 @@ async function printSelected() {
       }
     }
 
-    // Trigger download
     const bytes = await outPdf.save();
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
@@ -808,9 +1061,47 @@ async function printSelected() {
       alert('שגיאה ביצירת קובץ ה-PDF. בדוק את הקונסול.');
     }
   } finally {
-    btn.disabled = selectedSpells.size === 0;
-    btn.innerHTML = '<span class="btn-text">הדפס </span>נבחרים';
+    btn.disabled = favoriteSpells.size === 0;
+    btn.innerHTML = '<span class="btn-text">הדפס </span>מועדפים';
   }
+}
+
+// ═══════════════════════════════════════════
+//  SPELL MODAL (list view)
+// ═══════════════════════════════════════════
+let modalSpell = null;
+
+function openSpellModal(spell) {
+  modalSpell = spell;
+  document.getElementById('modalSpellImg').src = spell.image || '';
+  document.getElementById('modalSpellImg').alt = spell.name;
+  updateModalFavBtn();
+  document.getElementById('spellModalOverlay').classList.add('open');
+}
+
+function closeSpellModal() {
+  document.getElementById('spellModalOverlay').classList.remove('open');
+  modalSpell = null;
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('spellModalOverlay')) closeSpellModal();
+}
+
+function toggleModalFavorite() {
+  if (!modalSpell) return;
+  toggleFavorite(modalSpell.name);
+  // If adding (not a confirm), update immediately. Removing goes through confirm dialog.
+  if (!favoriteSpells.has(modalSpell.name) === false) updateModalFavBtn();
+  updateModalFavBtn();
+}
+
+function updateModalFavBtn() {
+  if (!modalSpell) return;
+  const btn = document.getElementById('modalSelectBtn');
+  const isFav = favoriteSpells.has(modalSpell.name);
+  btn.textContent = isFav ? '★ מועדף' : 'הוסף למועדפים';
+  btn.classList.toggle('selected-state', isFav);
 }
 
 // ═══════════════════════════════════════════
@@ -831,7 +1122,6 @@ function setView(mode) {
     list.style.display = 'flex';
   }
 
-  // Re-render from scratch in new mode
   displayedCount = 0;
   grid.innerHTML = '';
   list.innerHTML = '';
@@ -859,6 +1149,13 @@ function setView(mode) {
 // ═══════════════════════════════════════════
 //  START
 // ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    cancelUnfavorite();
+    closeSpellModal();
+  }
+});
+
 init();
 </script>
 </body>
