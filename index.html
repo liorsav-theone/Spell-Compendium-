@@ -312,6 +312,99 @@
     .header-actions .btn-text { display: none; }
   }
 
+  /* === VIEW TOGGLE === */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+  }
+
+  .view-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+  }
+
+  .view-btn svg { width: 16px; height: 16px; display: block; }
+
+  .view-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .view-btn.active { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+
+  /* === SPELL LIST (name-only view) === */
+  .spell-list {
+    padding: 8px 24px 40px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .spell-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    animation: fadeUp 0.2s ease both;
+  }
+
+  .spell-list-item:hover {
+    background: var(--bg-surface);
+    border-color: var(--border);
+  }
+
+  .spell-list-item.selected {
+    background: var(--gold-glow);
+    border-color: var(--gold-dim);
+  }
+
+  .spell-list-item.selected .list-spell-name { color: var(--gold-bright); }
+
+  .list-spell-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    letter-spacing: 0.03em;
+  }
+
+  .list-spell-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .list-level-badge {
+    color: var(--gold-dim);
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.68rem;
+  }
+
+  .spell-list .load-more-wrap { padding: 16px 0 8px; text-align: center; }
+  #spellList { display: none; }
+
+  @media (max-width: 768px) {
+    .spell-list { padding: 8px 12px 40px; }
+    .list-spell-meta { display: none; }
+    .list-spell-name { font-size: 0.85rem; }
+  }
+
   /* === LOAD MORE === */
   .load-more-wrap {
     grid-column: 1 / -1;
@@ -392,11 +485,20 @@
 
   <div class="results-bar">
     <span class="results-count" id="resultsCount">מציג <strong>0</strong> כישופים</span>
+    <div class="view-toggle">
+      <button type="button" class="view-btn active" id="viewGrid" onclick="setView('grid')" title="תצוגת כרטיסים">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </button>
+      <button type="button" class="view-btn" id="viewList" onclick="setView('list')" title="תצוגת רשימה">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+    </div>
   </div>
 </header>
 
 <!-- ========== SPELL GRID ========== -->
 <div class="spell-grid" id="spellGrid"></div>
+<div class="spell-list" id="spellList"></div>
 
 <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <script src="data/spells.js"></script>
@@ -409,6 +511,7 @@ const PAGE_SIZE = 50;
 let currentFiltered = [];
 let displayedCount = 0;
 let searchTimer = null;
+let viewMode = 'grid'; // 'grid' | 'list'
 
 // Hebrew labels for class names
 const CLASS_LABELS = {
@@ -494,6 +597,7 @@ function applyFilters() {
 
   displayedCount = 0;
   document.getElementById('spellGrid').innerHTML = '';
+  document.getElementById('spellList').innerHTML = '';
   showMore();
 }
 
@@ -501,14 +605,16 @@ function applyFilters() {
 //  PAGINATION — load PAGE_SIZE at a time
 // ═══════════════════════════════════════════
 function showMore() {
-  const grid = document.getElementById('spellGrid');
+  const container = viewMode === 'grid'
+    ? document.getElementById('spellGrid')
+    : document.getElementById('spellList');
 
   // Remove existing load-more button
-  const existingBtn = grid.querySelector('.load-more-wrap');
+  const existingBtn = container.querySelector('.load-more-wrap');
   if (existingBtn) existingBtn.remove();
 
   if (currentFiltered.length === 0 && displayedCount === 0) {
-    grid.innerHTML = `
+    container.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <p>לא נמצאו כישופים</p>
@@ -522,33 +628,46 @@ function showMore() {
   const fragment = document.createDocumentFragment();
 
   nextBatch.forEach((spell, i) => {
-    const card = document.createElement('div');
-    card.className = 'spell-card' + (selectedSpells.has(spell.name) ? ' selected' : '');
-    card.style.animationDelay = Math.min(i * 0.03, 0.5) + 's';
-    card.dataset.spellName = spell.name;
-
-    card.innerHTML = `
-      <div class="card-image-wrap">
-        <img src="${spell.image || ''}"
-             alt="${spell.name}"
-             loading="lazy"
-             decoding="async">
-      </div>`;
-
-    card.addEventListener('click', () => toggleSpell(spell.name));
-    fragment.appendChild(card);
+    if (viewMode === 'grid') {
+      const card = document.createElement('div');
+      card.className = 'spell-card' + (selectedSpells.has(spell.name) ? ' selected' : '');
+      card.style.animationDelay = Math.min(i * 0.03, 0.5) + 's';
+      card.dataset.spellName = spell.name;
+      card.innerHTML = `
+        <div class="card-image-wrap">
+          <img src="${spell.image || ''}"
+               alt="${spell.name}"
+               loading="lazy"
+               decoding="async">
+        </div>`;
+      card.addEventListener('click', () => toggleSpell(spell.name));
+      fragment.appendChild(card);
+    } else {
+      const row = document.createElement('div');
+      row.className = 'spell-list-item' + (selectedSpells.has(spell.name) ? ' selected' : '');
+      row.style.animationDelay = Math.min(i * 0.015, 0.4) + 's';
+      row.dataset.spellName = spell.name;
+      row.innerHTML = `
+        <span class="list-spell-name">${spell.name}</span>
+        <span class="list-spell-meta">
+          <span class="list-level-badge">${levelLabel(spell.level)}</span>
+          ${spell.school || ''}
+        </span>`;
+      row.addEventListener('click', () => toggleSpell(spell.name));
+      fragment.appendChild(row);
+    }
   });
 
   displayedCount += nextBatch.length;
-  grid.appendChild(fragment);
+  container.appendChild(fragment);
 
   // Show load-more button if there are more spells
   if (displayedCount < currentFiltered.length) {
     const remaining = currentFiltered.length - displayedCount;
     const wrap = document.createElement('div');
     wrap.className = 'load-more-wrap';
-    wrap.innerHTML = `<button class="load-more-btn" onclick="showMore()">הצג עוד (${remaining})</button>`;
-    grid.appendChild(wrap);
+    wrap.innerHTML = `<button type="button" class="load-more-btn" onclick="showMore()">הצג עוד (${remaining})</button>`;
+    container.appendChild(wrap);
   }
 
   document.getElementById('resultsCount').innerHTML =
@@ -572,15 +691,15 @@ function toggleSpell(name) {
   }
   updateSelectionUI();
 
-  document.querySelectorAll(`.spell-card[data-spell-name="${CSS.escape(name)}"]`).forEach(card => {
-    card.classList.toggle('selected', selectedSpells.has(name));
+  document.querySelectorAll(`[data-spell-name="${CSS.escape(name)}"]`).forEach(el => {
+    el.classList.toggle('selected', selectedSpells.has(name));
   });
 }
 
 function clearSelection() {
   selectedSpells.clear();
   updateSelectionUI();
-  document.querySelectorAll('.spell-card').forEach(card => card.classList.remove('selected'));
+  document.querySelectorAll('.spell-card, .spell-list-item').forEach(el => el.classList.remove('selected'));
 }
 
 function updateSelectionUI() {
@@ -692,6 +811,31 @@ async function printSelected() {
     btn.disabled = selectedSpells.size === 0;
     btn.innerHTML = '<span class="btn-text">הדפס </span>נבחרים';
   }
+}
+
+// ═══════════════════════════════════════════
+//  VIEW MODE
+// ═══════════════════════════════════════════
+function setView(mode) {
+  viewMode = mode;
+  const grid = document.getElementById('spellGrid');
+  const list = document.getElementById('spellList');
+  document.getElementById('viewGrid').classList.toggle('active', mode === 'grid');
+  document.getElementById('viewList').classList.toggle('active', mode === 'list');
+
+  if (mode === 'grid') {
+    grid.style.display = '';
+    list.style.display = 'none';
+  } else {
+    grid.style.display = 'none';
+    list.style.display = 'flex';
+  }
+
+  // Re-render from scratch in new mode
+  displayedCount = 0;
+  grid.innerHTML = '';
+  list.innerHTML = '';
+  showMore();
 }
 
 // ═══════════════════════════════════════════
