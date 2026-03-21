@@ -1025,7 +1025,7 @@ async function printSelected() {
 
     const outPdf = await PDFDocument.create();
     const pngDataArray = await Promise.all(
-      selected.map(s => loadRotatedPng(s.image.replace('images/', 'high_res_images/').replace('.webp', '.png')))
+      selected.map(s => loadRotatedPng(s.image))
     );
 
     for (let i = 0; i < pngDataArray.length; i += 2) {

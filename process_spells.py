@@ -29,21 +29,10 @@ import argparse
 # ─── CONFIG ───────────────────────────────────────────
 SPELLS_PDF_DIR = "spells"
 IMAGES_DIR = "images"
-HIRES_DIR = "high_res_images"
 SPELLS_JS_PATH = "data/spells.js"
 WEBP_QUALITY = 85       # WebP quality (1-100)
 WEBP_DPI = 200          # Resolution for PDF→image conversion
-HIRES_DPI = 600         # Resolution for high-res print PNG
 # ──────────────────────────────────────────────────────
-
-CLASSES = [
-    "Barbarian", "Bard", "Cleric", "Druid", "Fighter",
-    "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer",
-    "Warlock", "Wizard", "Artificer"
-]
-
-CLASS_MENU = "  ".join(f"[{i+1}]{c}" for i, c in enumerate(CLASSES))
-
 
 def slugify(name: str) -> str:
     """Convert spell name to a filename-safe slug."""
@@ -156,8 +145,6 @@ if __name__ == "__main__":
     # Open with PyMuPDF for image conversion
     fitz_doc = fitz.open(args.path)
 
-    Path(HIRES_DIR).mkdir(parents=True, exist_ok=True)
-
     entries = []
     skipped = 0
     level = 0
@@ -203,13 +190,6 @@ if __name__ == "__main__":
         img_data = pix.tobytes("png")
         img = Image.open(io.BytesIO(img_data))
         img.save(img_out, "WEBP", quality=WEBP_QUALITY)
-
-        # ── Save high-res PNG (from original vector source) ──
-        hires_out = f"{HIRES_DIR}/{slug}.png"
-        hires_zoom = HIRES_DPI / 72
-        hires_mat = fitz.Matrix(hires_zoom, hires_zoom)
-        hires_pix = fitz_doc[i].get_pixmap(matrix=hires_mat)
-        hires_pix.save(hires_out)
 
         # ── Ask for classes ──
         if not pname:
