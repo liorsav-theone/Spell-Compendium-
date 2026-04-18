@@ -24,7 +24,7 @@ WEBP_DPI        = 200
 # ──────────────────────────────────────────────────────
 CLASSES = [
     "טרובדור", "כוהן", "דרואיד", "אביר קודש", "סייר", "אשף",
-    "מכשף", "קוסם"
+    "מכשף", "קוסם", "ממציא"
 ]
 
 CLASS_MENU = "  ".join(f"[{i+1}]{c}" for i, c in enumerate(CLASSES))
@@ -32,6 +32,7 @@ CLASS_MENU = "  ".join(f"[{i+1}]{c}" for i, c in enumerate(CLASSES))
 
 def ask_classes(spell_name: str) -> list[str]:
     """Ask the user to pick classes for a spell."""
+    return ["ממציא"]
     print(f"\n  📜 {spell_name[::-1]}")
     print(f"  {CLASS_MENU}")
     raw = input("  Classes (numbers, e.g. 10 12): ").strip()
@@ -92,9 +93,6 @@ def main():
     SPELLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Iterate over all the json files to learn all spells configuration
-    json_data = [item for file in SPELLS_JSON_DIR.iterdir() for item in fh.open(file)]
-
     entries = []
 
     # Iterate over all spells to upload
@@ -105,12 +103,8 @@ def main():
 
         # Get spell data from the json (strip page suffix like " 1'" from multi-page spells)
         spell_name = spell.data['name'].replace(" 1'", "")
-        spell_data = next((d for d in json_data if d["name"] == spell_name), None)
-
-        # Ask the user for classes if not found in json
-        if not spell_data:
-            spell_data = dict(spell.data)
-            spell_data['classes'] = ask_classes(spell_name)
+        spell_data = dict(spell.data)
+        spell_data['classes'] = ask_classes(spell_name)
 
         # Open with fitz for image conversion (must reopen from bytes since PyPDFForm holds the stream)
         fitz_doc = fitz.open(stream=input_path.read_bytes(), filetype="pdf")

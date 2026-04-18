@@ -70,6 +70,7 @@ def get_form_field(page, prefix: str) -> str:
 
 def ask_classes(spell_name: str) -> list[str]:
     """Ask the user to pick classes for a spell."""
+    return ["ממציא"]
     print(f"\n  📜 {spell_name[::-1]}")
     print(f"  {CLASS_MENU}")
     raw = input("  Classes (numbers, e.g. 10 12): ").strip()
@@ -155,11 +156,11 @@ if __name__ == "__main__":
         page_num = i + 1
 
         # ── Extract form fields ──
-        name = get_form_field(page, "Name_")
-        pname = get_form_field(page, "PName_")
+        name = get_form_field(page, "Name")
+        pname = get_form_field(page, "PName")
         if not pname:
-            school = get_form_field(page, "School_")
-            level = get_form_field(page, "Level_")
+            school = get_form_field(page, "School")
+            level = get_form_field(page, "Level")
         else:
             name=pname
 
