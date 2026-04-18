@@ -470,6 +470,6 @@ const SPELLS = [
   { name: "קישור חפץ", level: 1, school: "זימון", classes: ["Inventor"], image: "images/קישור חפץ.webp", pdf: "spells/קישור חפץ.pdf" },
   { name: "נשק ארקאני", level: 1, school: "התמרה", classes: ["Inventor"], image: "images/נשק ארקאני.webp", pdf: "spells/נשק ארקאני.pdf" },
   { name: "אבלציה ארקאנית", level: 1, school: "התמרה", classes: ["Inventor"], image: "images/אבלציה ארקאנית.webp", pdf: "spells/אבלציה ארקאנית.pdf" },
-  { name: "ברק קופץ", level: 4, school: "פיצוץ", classes: ["ממציא"], image: "images/ברק קופץ.webp", pdf: "spells/ברק קופץ.pdf" },
-  { name: "פיצוץ שמים", level: 5, school: "פיצוץ", classes: ["ממציא"], image: "images/פיצוץ שמים.webp", pdf: "spells/פיצוץ שמים.pdf" },
+  { name: "ברק קופץ", level: 4, school: "פיצוץ", classes: [], image: "images/ברק קופץ.webp", pdf: "spells/ברק קופץ.pdf" },
+  { name: "פיצוץ שמים", level: 5, school: "פיצוץ", classes: [], image: "images/פיצוץ שמים.webp", pdf: "spells/פיצוץ שמים.pdf" },
 ];
